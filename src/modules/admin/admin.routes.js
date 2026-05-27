@@ -20,6 +20,8 @@ router.put('/hospitals/:id/verify',               ctrl.verifyHospital);
 router.put('/hospitals/:id/toggle-status',        ctrl.toggleHospital);
 router.put('/hospitals/:id/commission',           ctrl.setCommission);
 
+router.get('/doctors', ctrl.getAllDoctors);
+
 // Appointments
 router.get('/appointments', ctrl.getAllAppointments);
 

@@ -1,5 +1,6 @@
 const User        = require('../../models/User');
 const Hospital    = require('../../models/Hospital');
+const Doctor = require('../../models/Doctor');
 const Appointment = require('../../models/Appointment');
 const Payment     = require('../../models/Payment');
 const Review      = require('../../models/Review');
@@ -61,6 +62,26 @@ const toggleHospitalStatus = async (id) => {
 const setCommissionRate = async (id, rate) => {
   if (rate < 0 || rate > 100) throw new AppError('Rate must be 0–100', 400);
   return Hospital.findByIdAndUpdate(id, { commissionRate: rate }, { new: true }).lean();
+};
+
+const getAllDoctors = async (query) => {
+  const filter = { isActive: true,};
+
+  if (query.search) {
+    filter.$or = [
+      { name: new RegExp(query.search, 'i') },
+      { specialization: new RegExp(query.search, 'i') },
+    ];
+  }
+
+  return paginate(Doctor, filter, {
+    page: query.page,
+    limit: query.limit,
+    sort: { createdAt: -1 },
+    populate: [
+      { path: 'hospital', select: 'name' },
+    ],
+  });
 };
 
 // ── Appointments ───────────────────────────────────────────────────────────
@@ -179,7 +200,7 @@ const getDashboard = async () => {
 
 module.exports = {
   getAllUsers, getUserById, toggleUserStatus,
-  getAllHospitals, getHospitalById, verifyHospital, toggleHospitalStatus, setCommissionRate,
+  getAllHospitals, getHospitalById, getAllDoctors, verifyHospital, toggleHospitalStatus, setCommissionRate,
   getAllAppointments,
   getAllPayments, markSettlement,
   getPendingReviews, approveReview, hideReview,

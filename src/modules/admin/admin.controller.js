@@ -19,6 +19,9 @@ exports.verifyHospital    = asyncHandler(async (req, res) => { apiResponse.succe
 exports.toggleHospital    = asyncHandler(async (req, res) => { apiResponse.success(res, 'Status toggled',     await service.toggleHospitalStatus(req.params.id)); });
 exports.setCommission     = asyncHandler(async (req, res) => { apiResponse.success(res, 'Commission updated', await service.setCommissionRate(req.params.id, req.body.rate)); });
 
+// Doctors
+exports.getAllDoctors = asyncHandler(async (req, res) => { const { data, meta } = await service.getAllDoctors(req.query); apiResponse.success(res, 'Doctors fetched', data, 200, meta); });
+
 // Appointments
 exports.getAllAppointments = asyncHandler(async (req, res) => { const { data, meta } = await service.getAllAppointments(req.query); apiResponse.success(res, 'Appointments', data, 200, meta); });
 

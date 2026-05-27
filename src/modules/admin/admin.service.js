@@ -29,38 +29,337 @@ const toggleUserStatus = async (id) => {
   return user.save();
 };
 
-// ── Hospitals ──────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// Hospitals
+// ─────────────────────────────────────────────────────────────
+
+const Doctor = require('../../models/Doctor');
+const Appointment = require('../../models/Appointment');
+const Payment = require('../../models/Payment');
+const Review = require('../../models/Review');
+
+// 🔥 GET ALL HOSPITALS
 const getAllHospitals = async (query) => {
   const filter = {};
-  if (query.search)     filter.$text        = { $search: query.search };
-  if (query.isVerified) filter.isVerified   = query.isVerified === 'true';
-  if (query.isActive)   filter.isActive     = query.isActive   === 'true';
-  return paginate(Hospital, filter, { page: query.page, limit: query.limit });
+
+  // 🔥 SEARCH
+  if (query.search) {
+    filter.$or = [
+      { name: new RegExp(query.search, 'i') },
+      { email: new RegExp(query.search, 'i') },
+      { registrationNo: new RegExp(query.search, 'i') },
+    ];
+  }
+
+  // 🔥 VERIFICATION STATUS
+  if (query.verificationStatus) {
+    filter.verificationStatus = query.verificationStatus;
+  }
+
+  // 🔥 OLD SUPPORT
+  if (query.isVerified !== undefined) {
+    filter.isVerified = query.isVerified === 'true';
+  }
+
+  // 🔥 ACTIVE STATUS
+  if (query.isActive !== undefined) {
+    filter.isActive = query.isActive === 'true';
+  }
+
+  // 🔥 SORTING
+  const sort = {};
+
+  if (query.sortBy) {
+    sort[query.sortBy] =
+      query.sortOrder === 'asc' ? 1 : -1;
+  } else {
+    sort.createdAt = -1;
+  }
+
+  return paginate(Hospital, filter, {
+    page: query.page,
+    limit: query.limit,
+    sort,
+  });
 };
 
+// 🔥 GET SINGLE HOSPITAL
 const getHospitalById = async (id) => {
-  const h = await Hospital.findById(id).lean();
-  if (!h) throw new AppError('Hospital not found', 404);
-  return h;
+  const hospital = await Hospital.findById(id)
+    .populate('verifiedBy', 'name email')
+    .populate('suspendedBy', 'name email')
+    .lean();
+
+  if (!hospital) {
+    throw new AppError('Hospital not found', 404);
+  }
+
+  return hospital;
 };
 
-const verifyHospital = async (id) => {
-  const h = await Hospital.findById(id);
-  if (!h) throw new AppError('Hospital not found', 404);
-  h.isVerified = true;
-  return h.save();
+// 🔥 APPROVE HOSPITAL
+const approveHospital = async (id, adminId) => {
+  const hospital = await Hospital.findById(id);
+
+  if (!hospital) {
+    throw new AppError('Hospital not found', 404);
+  }
+
+  hospital.isVerified = true;
+  hospital.verificationStatus = 'approved';
+
+  hospital.verifiedBy = adminId;
+  hospital.verifiedAt = new Date();
+
+  hospital.rejectionReason = '';
+
+  return hospital.save();
 };
 
+// 🔥 REJECT HOSPITAL
+const rejectHospital = async (
+  id,
+  adminId,
+  reason
+) => {
+  const hospital = await Hospital.findById(id);
+
+  if (!hospital) {
+    throw new AppError('Hospital not found', 404);
+  }
+
+  hospital.isVerified = false;
+  hospital.verificationStatus = 'rejected';
+
+  hospital.rejectionReason =
+    reason || 'Hospital rejected by admin';
+
+  hospital.verifiedBy = adminId;
+  hospital.verifiedAt = new Date();
+
+  return hospital.save();
+};
+
+// 🔥 SUSPEND HOSPITAL
+const suspendHospital = async (
+  id,
+  adminId,
+  reason
+) => {
+  const hospital = await Hospital.findById(id);
+
+  if (!hospital) {
+    throw new AppError('Hospital not found', 404);
+  }
+
+  hospital.isActive = false;
+
+  hospital.suspensionReason =
+    reason || 'Hospital suspended by admin';
+
+  hospital.suspendedBy = adminId;
+  hospital.suspendedAt = new Date();
+
+  return hospital.save();
+};
+
+// 🔥 TOGGLE STATUS
 const toggleHospitalStatus = async (id) => {
-  const h = await Hospital.findById(id);
-  if (!h) throw new AppError('Hospital not found', 404);
-  h.isActive = !h.isActive;
-  return h.save();
+  const hospital = await Hospital.findById(id);
+
+  if (!hospital) {
+    throw new AppError('Hospital not found', 404);
+  }
+
+  hospital.isActive = !hospital.isActive;
+
+  return hospital.save();
 };
 
-const setCommissionRate = async (id, rate) => {
-  if (rate < 0 || rate > 100) throw new AppError('Rate must be 0–100', 400);
-  return Hospital.findByIdAndUpdate(id, { commissionRate: rate }, { new: true }).lean();
+// 🔥 UPDATE COMMISSION
+const setCommissionRate = async (
+  id,
+  rate
+) => {
+  if (rate < 0 || rate > 100) {
+    throw new AppError(
+      'Rate must be between 0 and 100',
+      400
+    );
+  }
+
+  const hospital =
+    await Hospital.findByIdAndUpdate(
+      id,
+      { commissionRate: rate },
+      { new: true }
+    ).lean();
+
+  return hospital;
+};
+
+// 🔥 GET HOSPITAL DOCTORS
+const getHospitalDoctors = async (
+  hospitalId,
+  query
+) => {
+  const filter = {
+    hospital: hospitalId,
+  };
+
+  if (query.search) {
+    filter.name = new RegExp(query.search, 'i');
+  }
+
+  const sort = {};
+
+  if (query.sortBy) {
+    sort[query.sortBy] =
+      query.sortOrder === 'asc' ? 1 : -1;
+  } else {
+    sort.createdAt = -1;
+  }
+
+  return paginate(Doctor, filter, {
+    page: query.page,
+    limit: query.limit,
+    sort,
+  });
+};
+
+// 🔥 GET HOSPITAL APPOINTMENTS
+const getHospitalAppointments = async (
+  hospitalId,
+  query
+) => {
+  const filter = {
+    hospital: hospitalId,
+  };
+
+  if (query.status) {
+    filter.status = query.status;
+  }
+
+  return paginate(Appointment, filter, {
+    page: query.page,
+    limit: query.limit,
+    sort: { createdAt: -1 },
+
+    populate: [
+      {
+        path: 'patient',
+        select: 'name email phone',
+      },
+      {
+        path: 'doctor',
+        select: 'name specialization',
+      },
+    ],
+  });
+};
+
+// 🔥 GET HOSPITAL PAYMENTS
+const getHospitalPayments = async (
+  hospitalId,
+  query
+) => {
+  const filter = {
+    hospital: hospitalId,
+  };
+
+  if (query.status) {
+    filter.status = query.status;
+  }
+
+  return paginate(Payment, filter, {
+    page: query.page,
+    limit: query.limit,
+    sort: { createdAt: -1 },
+
+    populate: [
+      {
+        path: 'patient',
+        select: 'name email',
+      },
+      {
+        path: 'appointment',
+        select:
+          'appointmentDate appointmentTime',
+      },
+    ],
+  });
+};
+
+// 🔥 FULL HOSPITAL PROFILE
+const getHospitalFullProfile = async (
+  hospitalId
+) => {
+  const hospital =
+    await Hospital.findById(hospitalId).lean();
+
+  if (!hospital) {
+    throw new AppError(
+      'Hospital not found',
+      404
+    );
+  }
+
+  const [
+    doctors,
+    appointmentsCount,
+    completedPayments,
+    revenue,
+    reviewsCount,
+  ] = await Promise.all([
+    Doctor.countDocuments({
+      hospital: hospitalId,
+    }),
+
+    Appointment.countDocuments({
+      hospital: hospitalId,
+    }),
+
+    Payment.countDocuments({
+      hospital: hospitalId,
+      status: 'completed',
+    }),
+
+    Payment.aggregate([
+      {
+        $match: {
+          hospital: hospital._id,
+          status: 'completed',
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          total: {
+            $sum: '$amount',
+          },
+        },
+      },
+    ]),
+
+    Review.countDocuments({
+      hospital: hospitalId,
+    }),
+  ]);
+
+  return {
+    hospital,
+
+    analytics: {
+      doctors,
+      appointmentsCount,
+      completedPayments,
+
+      totalRevenue:
+        revenue[0]?.total || 0,
+
+      reviewsCount,
+    },
+  };
 };
 
 // ── Appointments ───────────────────────────────────────────────────────────

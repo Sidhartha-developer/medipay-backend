@@ -12,12 +12,166 @@ exports.getAllUsers     = asyncHandler(async (req, res) => { const { data, meta 
 exports.getUserById    = asyncHandler(async (req, res) => { apiResponse.success(res, 'User detail',       await service.getUserById(req.params.id)); });
 exports.toggleUser     = asyncHandler(async (req, res) => { apiResponse.success(res, 'Status toggled',    await service.toggleUserStatus(req.params.id)); });
 
+// ─────────────────────────────────────────────────────────────
 // Hospitals
-exports.getAllHospitals    = asyncHandler(async (req, res) => { const { data, meta } = await service.getAllHospitals(req.query); apiResponse.success(res, 'Hospitals fetched', data, 200, meta); });
-exports.getHospitalById   = asyncHandler(async (req, res) => { apiResponse.success(res, 'Hospital detail',    await service.getHospitalById(req.params.id)); });
-exports.verifyHospital    = asyncHandler(async (req, res) => { apiResponse.success(res, 'Hospital verified',  await service.verifyHospital(req.params.id)); });
-exports.toggleHospital    = asyncHandler(async (req, res) => { apiResponse.success(res, 'Status toggled',     await service.toggleHospitalStatus(req.params.id)); });
-exports.setCommission     = asyncHandler(async (req, res) => { apiResponse.success(res, 'Commission updated', await service.setCommissionRate(req.params.id, req.body.rate)); });
+// ─────────────────────────────────────────────────────────────
+
+exports.getAllHospitals = asyncHandler(async (req, res) => {
+  const { data, meta } = await service.getAllHospitals(req.query);
+
+  apiResponse.success(
+    res,
+    'Hospitals fetched',
+    data,
+    200,
+    meta
+  );
+});
+
+exports.getHospitalById = asyncHandler(async (req, res) => {
+  const hospital = await service.getHospitalById(req.params.id);
+
+  apiResponse.success(
+    res,
+    'Hospital detail fetched',
+    hospital
+  );
+});
+
+// 🔥 APPROVE HOSPITAL
+exports.approveHospital = asyncHandler(async (req, res) => {
+  const hospital = await service.approveHospital(
+    req.params.id,
+    req.user.id
+  );
+
+  apiResponse.success(
+    res,
+    'Hospital approved successfully',
+    hospital
+  );
+});
+
+// 🔥 REJECT HOSPITAL
+exports.rejectHospital = asyncHandler(async (req, res) => {
+  const hospital = await service.rejectHospital(
+    req.params.id,
+    req.user.id,
+    req.body.reason
+  );
+
+  apiResponse.success(
+    res,
+    'Hospital rejected successfully',
+    hospital
+  );
+});
+
+// 🔥 SUSPEND HOSPITAL
+exports.suspendHospital = asyncHandler(async (req, res) => {
+  const hospital = await service.suspendHospital(
+    req.params.id,
+    req.user.id,
+    req.body.reason
+  );
+
+  apiResponse.success(
+    res,
+    'Hospital suspended successfully',
+    hospital
+  );
+});
+
+// 🔥 ACTIVATE / DEACTIVATE
+exports.toggleHospital = asyncHandler(async (req, res) => {
+  const hospital = await service.toggleHospitalStatus(
+    req.params.id
+  );
+
+  apiResponse.success(
+    res,
+    'Hospital status updated',
+    hospital
+  );
+});
+
+// 🔥 UPDATE COMMISSION
+exports.setCommission = asyncHandler(async (req, res) => {
+  const hospital = await service.setCommissionRate(
+    req.params.id,
+    req.body.rate
+  );
+
+  apiResponse.success(
+    res,
+    'Commission updated successfully',
+    hospital
+  );
+});
+
+// 🔥 GET HOSPITAL DOCTORS
+exports.getHospitalDoctors = asyncHandler(async (req, res) => {
+  const { data, meta } = await service.getHospitalDoctors(
+    req.params.id,
+    req.query
+  );
+
+  apiResponse.success(
+    res,
+    'Hospital doctors fetched',
+    data,
+    200,
+    meta
+  );
+});
+
+// 🔥 GET HOSPITAL APPOINTMENTS
+exports.getHospitalAppointments = asyncHandler(async (req, res) => {
+  const { data, meta } =
+    await service.getHospitalAppointments(
+      req.params.id,
+      req.query
+    );
+
+  apiResponse.success(
+    res,
+    'Hospital appointments fetched',
+    data,
+    200,
+    meta
+  );
+});
+
+// 🔥 GET HOSPITAL PAYMENTS
+exports.getHospitalPayments = asyncHandler(async (req, res) => {
+  const { data, meta } =
+    await service.getHospitalPayments(
+      req.params.id,
+      req.query
+    );
+
+  apiResponse.success(
+    res,
+    'Hospital payments fetched',
+    data,
+    200,
+    meta
+  );
+});
+
+// 🔥 FULL HOSPITAL PROFILE
+exports.getHospitalFullProfile = asyncHandler(async (req, res) => {
+  const profile =
+    await service.getHospitalFullProfile(
+      req.params.id
+    );
+
+  apiResponse.success(
+    res,
+    'Hospital full profile fetched',
+    profile
+  );
+});
 
 // Appointments
 exports.getAllAppointments = asyncHandler(async (req, res) => { const { data, meta } = await service.getAllAppointments(req.query); apiResponse.success(res, 'Appointments', data, 200, meta); });

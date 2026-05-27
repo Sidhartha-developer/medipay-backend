@@ -18,7 +18,7 @@ const createPaymentOrder = async (patientId, { appointmentId }) => {
   if (!appt) throw new AppError('Appointment not found', 404);
   if (appt.status !== 'pending') throw new AppError('Payment already processed or appointment is not pending', 400);
 
-  const order = await createOrder(appt.advanceAmount, 'INR', `appt_${appointmentId}`);
+  const order = await createOrder(appt.totalAmount, 'INR', `appt_${appointmentId}`);
   return { orderId: order.id, amount: order.amount, currency: order.currency, appointmentId };
 };
 
@@ -35,31 +35,32 @@ const verifyAndConfirm = async ({ appointmentId, razorpayOrderId, razorpayPaymen
   if (!appt) throw new AppError('Appointment not found', 404);
   if (appt.payment) throw new AppError('Payment already recorded for this appointment', 409);
 
-  const { commissionAmount, hospitalReceivable } = calculateCommission(appt.advanceAmount, appt.hospital.commissionRate);
+  const { commissionAmount, hospitalReceivable } =
+  calculateCommission(appt.totalAmount, appt.hospital.commissionRate);
 
   const payment = await Payment.create({
     appointment:        appt._id,
     patient:            patientId,
     hospital:           appt.hospital._id,
     totalAmount:        appt.totalAmount,
-    advancePaid:        appt.advanceAmount,
-    remainingAmount:    appt.remainingAmount,
+    // advancePaid:        appt.totalAmount,
+    // remainingAmount:    0,
     commissionRate:     appt.hospital.commissionRate,
     commissionAmount,
     hospitalReceivable,
     razorpayOrderId,
     razorpayPaymentId,
     razorpaySignature,
-    status: appt.remainingAmount > 0 ? 'partial' : 'completed',
+    status: 'completed',
     paymentMethod: 'razorpay',
   });
 
   await Transaction.create({
     payment:           payment._id,
     type:              'credit',
-    amount:            appt.advanceAmount,
+    amount:            appt.totalAmount,
     razorpayPaymentId,
-    description:       'Advance payment for appointment',
+    description:       'Full consultation payment for appointment',
   });
 
   // Update appointment
@@ -95,7 +96,7 @@ const verifyAndConfirm = async ({ appointmentId, razorpayOrderId, razorpayPaymen
       to: appt.patient.email,
       subject: 'Appointment Confirmed – Payment Received',
       template: 'paymentSuccess',
-      data: { patientName: appt.patient.name, doctorName: appt.doctor?.name, amount: appt.advanceAmount, transactionId: razorpayPaymentId },
+      data: { patientName: appt.patient.name, doctorName: appt.doctor?.name, amount: appt.totalAmount, transactionId: razorpayPaymentId },
     });
   }
 
@@ -129,7 +130,7 @@ const getDetail = async (id, userId, role) => {
 
 // ── Hospital earnings summary ──────────────────────────────────────────────
 const getHospitalSummary = async (hospitalId, query) => {
-  const filter = { hospital: hospitalId, status: { $in: ['partial', 'completed'] } };
+  const filter = { hospital: hospitalId, status: 'completed' };
   const { data, meta } = await paginate(Payment, filter, {
     page: query.page, limit: query.limit,
     sort: { createdAt: -1 },
@@ -137,7 +138,7 @@ const getHospitalSummary = async (hospitalId, query) => {
   });
   const hospitalObjectId = new mongoose.Types.ObjectId(hospitalId);
   const totals = await Payment.aggregate([
-    { $match: { hospital: hospitalObjectId, status: { $in: ['partial', 'completed'] } } },
+    { $match: { hospital: hospitalObjectId, status: 'completed' } },
     { $group: { _id: null, gross: { $sum: '$totalAmount' }, net: { $sum: '$hospitalReceivable' }, commission: { $sum: '$commissionAmount' }, pending: { $sum: { $cond: [{ $eq: ['$settledToHospital', false] }, '$hospitalReceivable', 0] } } } },
   ]);
   return { payments: data, meta, totals: totals[0] || {} };

@@ -13,75 +13,12 @@ router.get('/users',                   ctrl.getAllUsers);
 router.get('/users/:id',               ctrl.getUserById);
 router.put('/users/:id/toggle-status', ctrl.toggleUser);
 
-// ─────────────────────────────────────────────────────────────
 // Hospitals
-// ─────────────────────────────────────────────────────────────
-
-// 🔥 GET ALL HOSPITALS
-router.get(
-  '/hospitals',
-  ctrl.getAllHospitals
-);
-
-// 🔥 GET SINGLE HOSPITAL
-router.get(
-  '/hospitals/:id',
-  ctrl.getHospitalById
-);
-
-// 🔥 APPROVE HOSPITAL
-router.put(
-  '/hospitals/:id/approve',
-  ctrl.approveHospital
-);
-
-// 🔥 REJECT HOSPITAL
-router.put(
-  '/hospitals/:id/reject',
-  ctrl.rejectHospital
-);
-
-// 🔥 SUSPEND HOSPITAL
-router.put(
-  '/hospitals/:id/suspend',
-  ctrl.suspendHospital
-);
-
-// 🔥 ACTIVATE / DEACTIVATE
-router.put(
-  '/hospitals/:id/toggle-status',
-  ctrl.toggleHospital
-);
-
-// 🔥 UPDATE COMMISSION
-router.put(
-  '/hospitals/:id/commission',
-  ctrl.setCommission
-);
-
-// 🔥 GET HOSPITAL DOCTORS
-router.get(
-  '/hospitals/:id/doctors',
-  ctrl.getHospitalDoctors
-);
-
-// 🔥 GET HOSPITAL APPOINTMENTS
-router.get(
-  '/hospitals/:id/appointments',
-  ctrl.getHospitalAppointments
-);
-
-// 🔥 GET HOSPITAL PAYMENTS
-router.get(
-  '/hospitals/:id/payments',
-  ctrl.getHospitalPayments
-);
-
-// 🔥 GET FULL HOSPITAL PROFILE
-router.get(
-  '/hospitals/:id/full-profile',
-  ctrl.getHospitalFullProfile
-);
+router.get('/hospitals',                          ctrl.getAllHospitals);
+router.get('/hospitals/:id',                      ctrl.getHospitalById);
+router.put('/hospitals/:id/verify',               ctrl.verifyHospital);
+router.put('/hospitals/:id/toggle-status',        ctrl.toggleHospital);
+router.put('/hospitals/:id/commission',           ctrl.setCommission);
 
 // Appointments
 router.get('/appointments', ctrl.getAllAppointments);

@@ -5,7 +5,7 @@ const { sendEmail } = require('./src/services/emailService');
 router.get('/test-mail', async (req, res) => {
   try {
     await sendEmail({
-      to: 'YOUR_REAL_EMAIL@gmail.com',
+      to: 'ssidhartha209@gmail.com',
       subject: 'Medipay Mail Test',
       template: 'paymentSuccess',
       data: {

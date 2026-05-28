@@ -80,25 +80,25 @@ const verifyAndConfirm = async ({ appointmentId, razorpayOrderId, razorpayPaymen
     type: 'payment_success',
     data: { appointmentId: String(appt._id) },
   };
-  await createAndSend(patientPayload);
+  // await createAndSend(patientPayload);
 
-  await createAndSend({
-    recipientId: appt.hospital._id, recipientModel: 'Hospital',
-    fcmToken: appt.hospital?.fcmToken,
-    title: 'Appointment Confirmed',
-    body: `Payment received. Appointment with ${appt.patient?.name} is confirmed.`,
-    type: 'booking_confirmation',
-  });
+  // await createAndSend({
+  //   recipientId: appt.hospital._id, recipientModel: 'Hospital',
+  //   fcmToken: appt.hospital?.fcmToken,
+  //   title: 'Appointment Confirmed',
+  //   body: `Payment received. Appointment with ${appt.patient?.name} is confirmed.`,
+  //   type: 'booking_confirmation',
+  // });
 
   // Email
-  if (appt.patient?.email) {
-    await sendEmail({
-      to: appt.patient.email,
-      subject: 'Appointment Confirmed – Payment Received',
-      template: 'paymentSuccess',
-      data: { patientName: appt.patient.name, doctorName: appt.doctor?.name, amount: appt.totalAmount, transactionId: razorpayPaymentId },
-    });
-  }
+  // if (appt.patient?.email) {
+  //   await sendEmail({
+  //     to: appt.patient.email,
+  //     subject: 'Appointment Confirmed – Payment Received',
+  //     template: 'paymentSuccess',
+  //     data: { patientName: appt.patient.name, doctorName: appt.doctor?.name, amount: appt.totalAmount, transactionId: razorpayPaymentId },
+  //   });
+  // }
 
   return { payment, appointment: { _id: appt._id, status: appt.status } };
 };

@@ -11,12 +11,21 @@ const templates = {
 };
 
 const sendEmail = async ({ to, subject, template, data }) => {
-  try {
-    const html = templates[template] ? templates[template](data) : data.html || '';
-    await transporter.sendMail({ from: process.env.MAIL_FROM, to, subject, html });
-  } catch (err) {
-    logger.error('Email send error:', err);
-  }
+
+  const html = templates[template]
+    ? templates[template](data)
+    : data.html || '';
+
+  const info = await transporter.sendMail({
+    from: process.env.MAIL_FROM,
+    to,
+    subject,
+    html,
+  });
+
+  console.log('MAIL SENT INFO =>', info);
+
+  return info;
 };
 
 module.exports = { sendEmail };

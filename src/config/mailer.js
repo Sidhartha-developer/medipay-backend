@@ -5,4 +5,12 @@ const transporter = nodemailer.createTransport({
   secure: false,
   auth: { user: process.env.MAIL_USER, pass: process.env.MAIL_PASS },
 });
+
+transporter.verify((err, success) => {
+  if (err) {
+    console.error('MAIL ERROR =>', err);
+  } else {
+    console.log('MAIL SERVER READY');
+  }
+});
 module.exports = transporter;

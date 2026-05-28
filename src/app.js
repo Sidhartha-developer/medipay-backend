@@ -23,6 +23,7 @@ const reviewRoutes       = require('./modules/reviews/review.routes');
 const notificationRoutes = require('./modules/notifications/notification.routes');
 const analyticsRoutes    = require('./modules/analytics/analytics.routes');
 const adminRoutes        = require('./modules/admin/admin.routes');
+const testRoutes = require('../test.routes');
 
 const app = express();
 
@@ -81,6 +82,7 @@ app.use(`${BASE}/reviews`,       reviewRoutes);
 app.use(`${BASE}/notifications`, notificationRoutes);
 app.use(`${BASE}/analytics`,     analyticsRoutes);
 app.use(`${BASE}/admin`,         adminRoutes);
+app.use(`${BASE}/test`, testRoutes);
 
 // ── 404 ────────────────────────────────────────────────────────────────────
 app.use('*', (req, res) => res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found` }));
